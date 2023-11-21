@@ -25,7 +25,7 @@ func NewService(url string, user string, pass string) *Service {
 	}
 }
 
-func (r *Service) POST(route string, opts map[string]any) ([]map[string]any, error) {
+func (r *Service) Call(route string, opts map[string]any) ([]map[string]any, error) {
 	var t string
 	res := make([]map[string]any, 0)
 	t = "{}"
@@ -36,7 +36,7 @@ func (r *Service) POST(route string, opts map[string]any) ([]map[string]any, err
 		}
 		t = string(tp)
 	}
-	url := fmt.Sprintf("%s%s", r.BaseURL, route)
+	url := fmt.Sprintf("%s/rpc/%s", r.BaseURL, route)
 	d := bytes.NewBuffer([]byte(t))
 	req, err := http.NewRequest("POST", url, d)
 	req.Header.Set("Content-Type", "application/json")
@@ -57,36 +57,9 @@ func (r *Service) POST(route string, opts map[string]any) ([]map[string]any, err
 	return res, err
 }
 
-func (r *Service) GET(route string) ([]map[string]any, int, error) {
-	var code int
-	res := make([]map[string]any, 0)
-	url := fmt.Sprintf("%s%s", r.BaseURL, route)
-	req, err := http.NewRequest("GET", url, nil)
-	req.Header.Set("Content-Type", "application/json")
-	req.SetBasicAuth(r.User, r.Pass)
-	resp, err := r.Client.Do(req)
-	if err != nil {
-		return res, code, err
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return res, code, err
-	}
-	if resp.StatusCode != 200 {
-		return res, resp.StatusCode, errors.New(string(body))
-	}
-	err = json.Unmarshal(body, &res)
-	return res, code, err
-}
-
-func (r *Service) First(method, route string, opts map[string]any) (row map[string]any, code int, err error) {
+func (r *Service) First(route string, opts map[string]any) (row map[string]any, code int, err error) {
 	rows := make([]map[string]any, 0)
-	if method == "POST" {
-		rows, err = r.POST(route, opts)
-	} else {
-		rows, code, err = r.GET(route)
-	}
+	rows, err = r.Call(route, opts)
 	if err != nil {
 		return row, code, err
 	}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -42,13 +43,13 @@ func inventoryFactory() map[string]any {
 
 func getInventory(client *Service, projectID string) (res map[string]any, err error) {
 	res = inventoryFactory()
-	d, err := client.POST("get_host_groups", map[string]any{
+	d, err := client.Call("get_host_groups", map[string]any{
 		"project_id": projectID,
 	})
 	croak(err)
 	lockedHosts := make([]string, 0)
 	for _, h := range d {
-		hostGroupID, ok := h["host_group_id"].(int64)
+		hostGroupID, ok := h["host_group_id"]
 		if !ok {
 			croak(errors.New(fmt.Sprintf("bad host group ID: %v", h["host_group_id"])))
 		}
@@ -65,7 +66,7 @@ func getInventory(client *Service, projectID string) (res map[string]any, err er
 			groupVars = h["data"]
 		}
 		hosts := make([]string, 0)
-		g, err := client.POST("get_host_group_ips", map[string]any{
+		g, err := client.Call("get_host_group_ips", map[string]any{
 			"host_group_id": hostGroupID,
 			"project_id":    projectID,
 		})
@@ -89,7 +90,9 @@ func getInventory(client *Service, projectID string) (res map[string]any, err er
 			"vars":  groupVars,
 		}
 	}
-	fmt.Println(lockedHosts)
+	js, err := json.Marshal(lockedHosts)
+	croak(err)
+	logErr(errors.New(string(js)))
 	return res, err
 }
 
@@ -101,5 +104,7 @@ func main() {
 	client := NewService(baseURL, user, pass)
 	res, err := getInventory(client, projectID)
 	croak(err)
-	fmt.Println(res)
+	js, err := json.Marshal(res)
+	croak(err)
+	fmt.Println(string(js))
 }
