@@ -65,12 +65,13 @@ func getInventory(client *Service, projectID string) (res map[string]any, err er
 		if h["data"] != nil {
 			groupVars = h["data"]
 		}
-		hosts := make([]string, 0)
+		var hosts []string
 		g, err := client.Call("get_host_group_ips", map[string]any{
 			"host_group_id": hostGroupID,
 			"project_id":    projectID,
 		})
 		croak(err)
+		hosts = []string{}
 		for _, x := range g {
 			hostIP, ok := x["host_ip"].(string)
 			if !ok {
@@ -78,8 +79,16 @@ func getInventory(client *Service, projectID string) (res map[string]any, err er
 				logErr(errors.New(fmt.Sprintf("bad host_ip for host_id [%d]", hostID)))
 				continue
 			}
-			hostLocked, ok := x["host_locked"].(bool)
-			if !ok || hostLocked {
+			var hostLocked bool
+			locked, ok := x["host_locked"]
+			if !ok || locked == nil {
+				continue
+			}
+			hostLocked, ok = locked.(bool)
+			if !ok {
+				continue
+			}
+			if hostLocked {
 				lockedHosts = append(lockedHosts, hostIP)
 				continue
 			}
