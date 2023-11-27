@@ -93,9 +93,6 @@ func getInventory(client *Service, projectID string) (res map[string]any, err er
 			"vars":  groupVars,
 		}
 	}
-	js, err := json.Marshal(lockedHosts)
-	croak(err)
-	logErr(errors.New(string(js)))
 	return res, err
 }
 
