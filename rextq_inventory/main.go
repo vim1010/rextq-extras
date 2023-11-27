@@ -82,11 +82,13 @@ func getInventory(client *Service, projectID string) (res map[string]any, err er
 			var hostLocked bool
 			locked, ok := x["host_locked"]
 			if !ok || locked == nil {
-				continue
-			}
-			hostLocked, ok = locked.(bool)
-			if !ok {
-				continue
+				hostLocked = false
+			} else {
+				hostLocked, ok = locked.(bool)
+				if !ok {
+					logErr(errors.New(fmt.Sprintf("could not cast hostLocked [%v]", locked)))
+					continue
+				}
 			}
 			if hostLocked {
 				lockedHosts = append(lockedHosts, hostIP)
