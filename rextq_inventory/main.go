@@ -85,6 +85,9 @@ func getInventory(client *Service, projectID string) (res map[string]any, err er
 			}
 			hosts = append(hosts, hostIP)
 		}
+		if groupVars == nil {
+			groupVars = map[string]any{}
+		}
 		res[hostGroupName] = map[string]any{
 			"hosts": hosts,
 			"vars":  groupVars,
